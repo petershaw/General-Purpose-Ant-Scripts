@@ -68,10 +68,12 @@
 		</fail>
 		<fail message="Property deliverable or command is missing.">
 			<condition>
+				<not>
 				<or>
 					<isset property="deliverable"/>
 					<isset property="command"/>
 				</or>
+				</not>
 			</condition>
 		</fail>
 	</target>
