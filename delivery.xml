@@ -1,0 +1,209 @@
+<project name="delivery" basedir="." default="main">
+	<!--
+		Delivery Ant Script
+		===
+		run: ant help
+		===
+		This is a general purpose script to upload and install software on 
+		remote maschines.
+	-->
+	
+	<!-- global properties -->
+	<property environment="env"/>
+	<property name="username" value="${env.USER}"/>
+	<property name="keyfile" value="~/.ssh/id_rsa" />
+	
+	<!-- private classpath -->
+	<path id="classpath">
+		<fileset dir="./lib">
+			<include name="**/*.jar" />
+		 </fileset>
+	</path>
+	
+	<!-- Prepares the system and downloads nessasary files -->
+	<target name="init">
+		<mkdir dir="./lib" />
+		<condition property="lib.libIsAvailable">
+			<and>
+				<available file="./lib/ant-jsch-1.6.5.jar" type="file"/>
+				<available file="./lib/jsch-0.1.50.jar" type="file"/>
+			</and>
+		</condition>
+	</target>
+	
+	<!-- downlaods depedencies -->
+	<target name="download-libs" unless="lib.libIsAvailable">
+		<get src="http://mirrors.ibiblio.org/maven2/jsch/jsch/0.1.29/jsch-0.1.29.jar"
+			dest="./lib"
+			skipexisting="true"
+			httpusecaches="true" />
+		<get src="http://mirrors.ibiblio.org/maven2/ant/ant-jsch/1.6.5/ant-jsch-1.6.5.jar"
+			dest="./lib"
+			skipexisting="true"
+			httpusecaches="true" />
+	</target>
+	
+	<!-- Prepares the ant task. Creates a lib dir and downlaods nessasary files -->
+	<target name="prepare" depends="init">
+		<antcall	target="download-libs" 
+					inheritAll="true" 
+					inheritRefs="true" />
+	</target>
+	
+	<!-- checks if all nessaserry options are settet -->
+	<target name="check-options">
+		<fail message="Property target.host is missing.">
+			<condition>
+				<not>
+					<isset property="target.host"/>
+				</not>
+			</condition>
+		</fail>
+		<fail message="Property target.dir is missing.">
+			<condition>
+				<not>
+					<isset property="target.dir" />
+				</not>
+			</condition>
+		</fail>
+		<fail message="Property deliverable or command is missing.">
+			<condition>
+				<or>
+					<isset property="deliverable"/>
+					<isset property="command"/>
+				</or>
+			</condition>
+		</fail>
+	</target>
+	
+	<!-- Checks if deleiverable is a dir or a file -->
+	<target name="dirtypecheck">
+		<condition property="type.dir">
+			<available file="${deliverable}" type="dir"/>
+		</condition>
+		<condition property="type.file">
+			<available file="${deliverable}" type="file"/>
+		</condition>
+	</target>
+	
+	<!-- Checks if command is using a file or a single line -->
+	<target name="commandtypecheck">
+		<condition property="cmd.file">
+			<isset property="deliverable"/>
+		</condition>
+		<condition property="cmd.command">
+			<isset property="command"/>
+		</condition>
+	</target>
+	
+	<!-- upload descriptor for a single file -->
+	<target name="upload-file-with-keyfile" depends="check-options" if="keyfile" unless="cmd.file">
+		<echo message="Uplaod file with keyfile" />
+		<scp file="${deliverable}"
+			todir="${username}@${target.host}:${target.dir}" 
+			keyfile="${keyfile}"
+			verbose="true"
+			trust="true"
+		/>
+	</target>
+	
+	 <!-- upload descriptor for a directory -->
+	<target name="upload-directory-with-keyfile" depends="check-options" if="keyfile" unless="type.file">
+		<echo message="Uplaod directory with keyfile" />
+		<scp file="${deliverable}"
+			todir="${username}@${target.host}:${target.dir}" 
+			keyfile="${keyfile}"
+			verbose="true"
+			trust="true">
+			 <fileset dir="${deliverable}" />
+		</scp>
+	</target>
+	
+	<!-- upload meta discriptor -->
+	<target name="upload" depends="prepare, dirtypecheck">
+		<antcall	target="upload-file-with-keyfile" 
+					inheritAll="true" 
+					inheritRefs="true" />
+		<antcall	target="upload-directory-with-keyfile" 
+					inheritAll="true" 
+					inheritRefs="true" />
+	</target>
+	
+	
+	 <!-- execute descriptor for command file -->
+	<target name="execute-file-with-keyfile" depends="check-options" if="keyfile" unless="type.file">
+		<echo message="Executes a file on taget" />
+		<sshexec	host="${target.host}"
+					username="${username}"
+					trust="true"
+					keyfile="${keyfile}"
+					verbose="true"
+					commandRessource="${deliverable}" />
+	</target>
+	
+	 <!-- execute descriptor for single command line -->
+	<target name="execute-line-with-keyfile" depends="check-options" if="keyfile" unless="type.file">
+		<echo message="Executes a single line command on taget" />
+		<sshexec	host="${target.host}"
+					username="${username}"
+					trust="true"
+					keyfile="${keyfile}"
+					verbose="true"
+					command="${command}" />
+	</target>
+	
+	<!-- executor meta discriptor -->
+	<target name="execute" depends="prepare, commandtypecheck">
+		<antcall	target="execute-file-with-keyfile" 
+					inheritAll="true" 
+					inheritRefs="true" />
+		<antcall	target="execute-line-with-keyfile" 
+					inheritAll="true" 
+					inheritRefs="true" />
+	</target>
+	
+	<!-- running the main task - just check variables, do nothing -->
+	<target name="main" depends="prepare, check-options">
+		
+	</target>
+	
+	<!-- show all properties -->
+	<target name="showprop" depends="">
+		<echoproperties />
+	</target>
+	
+	<target name="help">
+		<echo>
+delivery
+=================
+run ant with -Doption=value parameters to set the following
+ options. Mandatory options are marked with an asterisk*
+
+   (*) target.host	-  set the host name or ip where you want to 
+					   upload the deliverable.
+
+   (*) target.dir	-  set the directory to store the files to on 
+					   the target maschine.
+				   
+   (*) deliverable	-  set the file or directory you want to upload to target.host
+   or  command		-  set the command line to execute 
+   
+	   username		-  set the ssh username to connect with. 
+					   if no username is setm than the system 
+					   user '${env.USER}' will come in place.
+   
+	   keyfile		-  set the keyfile for the user 'username'
+						If no keyfile is set, then it's been taken
+						from ~/.ssh/id_rsa
+   
+Tasks:
+	  upload		- uplaods the deliverable to the target.host in 
+					   target.dir
+	  
+	  execute		- executes a deliverable, or a single command
+	  
+	  help			- shows this help.
+
+		</echo>
+	</target>
+</project>
