@@ -126,7 +126,7 @@
 	
 	
 	 <!-- execute descriptor for command file -->
-	<target name="execute-file-with-keyfile" depends="check-options" if="keyfile" unless="type.file">
+	<target name="execute-file-with-keyfile" depends="check-options" if="keyfile" unless="cmd.command">
 		<echo message="Executes a file on taget" />
 		<sshexec	host="${target.host}"
 					username="${username}"
@@ -137,7 +137,7 @@
 	</target>
 	
 	 <!-- execute descriptor for single command line -->
-	<target name="execute-line-with-keyfile" depends="check-options" if="keyfile" unless="type.file">
+	<target name="execute-line-with-keyfile" depends="check-options" if="keyfile" unless="cmd.file">
 		<echo message="Executes a single line command on taget" />
 		<sshexec	host="${target.host}"
 					username="${username}"
