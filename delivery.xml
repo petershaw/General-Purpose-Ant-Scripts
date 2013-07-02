@@ -59,13 +59,6 @@
 				</not>
 			</condition>
 		</fail>
-		<fail message="Property target.dir is missing.">
-			<condition>
-				<not>
-					<isset property="target.dir" />
-				</not>
-			</condition>
-		</fail>
 		<fail message="Property deliverable or command is missing.">
 			<condition>
 				<not>
@@ -184,7 +177,7 @@ run ant with -Doption=value parameters to set the following
    (*) target.host	-  set the host name or ip where you want to 
 					   upload the deliverable.
 
-   (*) target.dir	-  set the directory to store the files to on 
+	   target.dir	-  set the directory to store the files to on 
 					   the target maschine.
 				   
    (*) deliverable	-  set the file or directory you want to upload to target.host
