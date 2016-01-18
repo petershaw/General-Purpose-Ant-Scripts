@@ -33,11 +33,11 @@
 	
 	<!-- downlaods depedencies -->
 	<target name="download-libs" unless="lib.libIsAvailable">
-		<get src="http://mirrors.ibiblio.org/maven2/jsch/jsch/0.1.29/jsch-0.1.29.jar"
+		<get src="http://central.maven.org/maven2/com/jcraft/jsch/0.1.29/jsch-0.1.29.jar"
 			dest="./lib"
 			skipexisting="true"
 			httpusecaches="true" />
-		<get src="http://mirrors.ibiblio.org/maven2/ant/ant-jsch/1.6.5/ant-jsch-1.6.5.jar"
+		<get src="http://central.maven.org/maven2/ant/ant-jsch/1.6.5/ant-jsch-1.6.5.jar"
 			dest="./lib"
 			skipexisting="true"
 			httpusecaches="true" />
